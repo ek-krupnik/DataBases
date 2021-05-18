@@ -882,7 +882,7 @@ insert into "all genres_X_Media library" (film_id,  genre_id) values
 
 select * from "all genres_X_Media library";
 
---------------------------------
+------------------------- 5 -------------------------
 select first_nm, second_nm
     from actors
 join "actors_X_media library"
@@ -890,7 +890,7 @@ join "actors_X_media library"
     where "actors_X_media library".film_id = (select "media library".film_id from "media library" where film_nm = 'Шерлок')
     group by first_nm, second_nm; -- все актёры (имя, фамилия), которые играли в Шерлоке
 
------------
+----------
 select first_nm, second_nm
     from actors
 join "actors_X_media library"
@@ -905,7 +905,7 @@ join "actors_X_media library"
     where "actors_X_media library".film_id = (select "media library".film_id from "media library" where film_nm = 'Человек-паук: Возвращение домой')
     group by first_nm, second_nm; -- все актёры (имя, фамилия), которые играли в Мстители: Финал И в Человек-паук: Возвращение домой
 
------------
+----------
 
 select count (*)
     from "media library"
@@ -916,7 +916,7 @@ select count (*)
                 from "additional info"
                 where country_nm = 'США'); -- количество фильмов с рейтингом 12+, снятые в США
 
------------
+----------
 
 select avg(extract(min from duration_min))
     from "additional info"
@@ -929,7 +929,7 @@ join "all genres" on "all genres_X_Media library".genre_id = "all genres".genre_
                 from "all genres"
                 where genre_nm = 'приключения'); -- средняя продолжительность фильмов в жанре приключения
 
------------
+----------
 
 select distinct first_nm, count(*)
     from actors
@@ -940,7 +940,7 @@ join awards on "awards_X_media library".award_id = awards.award_id
     where awards.award_id in (select awards.award_id from awards)
     group by first_nm; -- для каждого актёра количество фильмов, в которых он снимался, которые получили награду
 
------------------------------------------------------
+------------------------- 6 -------------------------
 
 -- CRUD - select, insert, update, delete
 
@@ -955,9 +955,9 @@ insert into actors (first_nm, second_nm, births_dt, height_amt, citizenship_txt)
     );
 update actors set height_amt = height_amt + 1
     where second_nm = 'Крупник';
-delete from actors where second_nm = 'Крупник'
+delete from actors where second_nm = 'Крупник';
 
---
+----------
 
 select * from awards;
 insert into  awards (award_nm, info_dscr, foundation_dt) VALUES
@@ -971,7 +971,7 @@ update awards set award_nm = 'Отл11'
 delete from awards where foundation_dt = '19-05-2021';
 
 
------------------------------------------------------
+------------------------- 7 -------------------------
 
 create or replace view awards_vw as
     select award_nm, extract(years  from foundation_dt)
@@ -982,7 +982,7 @@ drop view awards_vw;
 select *
     from awards_vw;
 
----
+----------
 
 create or replace view "medialibrary_vw" as
     select film_nm, film_type, mpaa_rating_txt
@@ -991,7 +991,7 @@ create or replace view "medialibrary_vw" as
 select *
     from "medialibrary_vw";
 
----
+----------
 
 create or replace view "additional info_vw" as
     select info_desc, country_nm, duration_min
@@ -1000,7 +1000,7 @@ create or replace view "additional info_vw" as
 select *
     from "additional info_vw";
 
----
+----------
 
 create or replace view actors_vw as
     select first_nm, second_nm
@@ -1009,16 +1009,16 @@ create or replace view actors_vw as
 select *
     from actors_vw;
 
----
+----------
 
 create or replace view "all genres_vw" as
     select genre_nm, info_dscr
     from medialibrary."all genres";
 
 select *
-    from "all genres_vw"
+    from "all genres_vw";
 
--------------------------------------------
+------------------------- 8 -------------------------
 
 create or replace view "additional more_vw" as
     select "media library".film_nm, "media library".film_type, substr(info_desc, 0, 20) || '...', country_nm, duration_min
@@ -1031,7 +1031,7 @@ select *
     from "additional more_vw";
 
 
-----
+----------
 
 
 create or replace view "awards more_vw" as
@@ -1044,3 +1044,44 @@ create or replace view "awards more_vw" as
 select *
     from "awards more_vw";
 
+------------------------- 9 -------------------------
+
+create or replace function check_actors_update()
+    returns trigger as $$
+    declare
+    begin
+        raise notice 'Updating actors';
+        return new;
+    end;
+$$ language plpgsql;
+
+create trigger check_update
+    after update on medialibrary.actors
+    for each row
+    execute procedure check_actors_update();
+
+----------
+
+create or replace function check_actors_new()
+    returns trigger as $$
+    declare
+    begin
+        raise notice 'New actor was added';
+        return new;
+    end;
+$$ language plpgsql;
+
+create trigger check_new
+    after insert on medialibrary.actors
+    for each row
+    execute procedure check_actors_new();
+
+insert into actors (first_nm, second_nm, births_dt, height_amt, citizenship_txt) VALUES
+    (
+        'Екатерина',
+        'Крупник',
+        '14-09-2001',
+        172,
+        'Россия'
+    );
+delete from actors where second_nm = 'Крупник'
